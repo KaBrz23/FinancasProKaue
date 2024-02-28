@@ -16,7 +16,7 @@ API do projeto Finanças Pro - Controle de Despesas pessoais
 - [Listar Categorias](#listar-categorias)
 - [Cadastrar Categoria](#cadastrar-categoria)
 - [Detalhes da Categoria](#detalhes-da-categoria)
-- [Apagar Categoria](#apagar-categoria)}
+- [Apagar Categoria](#apagar-categoria)
 - [Atualizar Categoria](#atualizar-categoria)
 
 ### Listar Categorias
