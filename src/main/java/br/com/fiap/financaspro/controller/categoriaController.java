@@ -1,11 +1,9 @@
 package br.com.fiap.financaspro.controller;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,89 +15,80 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import br.com.fiap.financaspro.model.Categoria;
+import br.com.fiap.financaspro.repository.CategoriaRepository;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/categoria")
+@RequestMapping("categoria")
+@Slf4j
 public class categoriaController {
-    Logger log = LoggerFactory.getLogger(getClass());
 
-    List<Categoria> repository = new ArrayList<>();
+    @Autowired
+    CategoriaRepository repository;
 
     @GetMapping
     public List<Categoria> index() {
-        return repository;
+        return repository.findAll();
+
     }
 
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public Categoria create(@RequestBody Categoria categoria) { //binding
-        log.info("Cadastrando categoria: {}", categoria);
-        repository.add(categoria);
+    public Categoria create(@RequestBody Categoria categoria) { // binding
+        log.info("cadastrando categoria {} ", categoria);
+        repository.save(categoria);
         return categoria;
     }
 
     @GetMapping("{id}")
-    public ResponseEntity show(@PathVariable Long id){
-        log.info("Buscando categoria por id {}", id);
+    public ResponseEntity<Categoria> show(@PathVariable Long id) {
+        log.info("buscando categoria por id {}", id);
 
-        // for(Categoria categoria: repository){
-        //    if (categoria.id().equals(id)) 
-        //        return ResponseEntity.ok(categoria);
-        // }
+        return repository
+                .findById(id)
+                .map(ResponseEntity::ok) //reference method
+                .orElse(ResponseEntity.notFound().build());
 
-        var categoriaEncontrada = getCategoriaById(id);
-
-        if(categoriaEncontrada.isEmpty()){
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(categoriaEncontrada.get());
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<Object> destroy(@PathVariable Long id){
-        log.info("Apagando categoria");
+    public ResponseEntity<Object> destroy(@PathVariable Long id) {
+        log.info("apagando categoria");
 
-        var categoriaEncontrada = getCategoriaById(id);
+        verificarSeExisteCategoria(id);
 
-        if(categoriaEncontrada.isEmpty()){
-            return ResponseEntity.notFound().build();
-        }
-
-        repository.remove(categoriaEncontrada.get());
+        repository.deleteById(id);
         return ResponseEntity.noContent().build();
+
     }
+
+  
 
     @PutMapping("{id}")
     public ResponseEntity<Categoria> update(@PathVariable Long id, @RequestBody Categoria categoria){
-        log.info("Atualizando categoria com id {} para {}", id, categoria);
-        //buscar a categoria
-        var categoriaEncontrada = getCategoriaById(id);
+        log.info("atualizando categoria com id {} para {}", id, categoria);
 
-        if(categoriaEncontrada.isEmpty())
-            return ResponseEntity.notFound().build();
-        //criar uma nova categoria com os novos dados
-        var categoriaAntiga = categoriaEncontrada.get();
-        var categoriaNova = new Categoria(id, categoria.nome(), categoria.icone());
+        verificarSeExisteCategoria(id);
 
-        //apagar a categoria antiga
-        repository.remove(categoriaAntiga);
-
-        //add a categoria nova
-        repository.add(categoriaNova);
-
-        return ResponseEntity.ok(categoriaNova);
+        categoria.setId(id);
+        repository.save(categoria);
+        return ResponseEntity.ok(categoria);
     }
 
-    private Optional<Categoria> getCategoriaById(Long id) {
-        var categoriaEncontrada = repository
-            .stream()
-            .filter( c -> c.id().equals(id))
-            .findFirst();
-        return categoriaEncontrada;
+
+
+
+  private void verificarSeExisteCategoria(Long id) {
+        repository
+            .findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, 
+                                "Não existe categoria com o id informado. Consulte lista em /categoria"
+                            ));
     }
 
-    
+
 }
