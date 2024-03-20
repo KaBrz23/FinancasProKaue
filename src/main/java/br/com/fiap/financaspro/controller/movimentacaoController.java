@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.fiap.financaspro.model.Movimentacao;
 import br.com.fiap.financaspro.repository.MovimentacaoRepository;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -33,7 +34,7 @@ public class movimentacaoController {
     
     @PostMapping
     @ResponseStatus(CREATED)
-    public Movimentacao create(@RequestBody Movimentacao movimentacao) {
+    public Movimentacao create(@RequestBody @Valid Movimentacao movimentacao) {
         return repository.save(movimentacao);
     }
     
